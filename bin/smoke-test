@@ -1,0 +1,39 @@
+#!/bin/sh
+# End-to-end check against the running Docker stack: login, cookie session, Redis-backed rate limiter and cache,
+# and the clear 503 when no TMDB token is configured. Usage: bin/smoke-test [base-url]
+set -eu
+
+cd "$(dirname "$0")/.."
+
+base=${1:-http://localhost:$(grep -E '^APP_PORT=' .env | cut -d= -f2)}
+username=$(grep -E '^AUTH_USERNAME=' .env | cut -d= -f2-)
+password=$(grep -E '^AUTH_PASSWORD=' .env | cut -d= -f2-)
+jar=$(mktemp)
+trap 'rm -f "$jar"' EXIT
+
+expect() {
+    expected=$1; shift
+    actual=$(curl -s -o /dev/null -w '%{http_code}' "$@")
+    if [ "$actual" != "$expected" ]; then
+        echo "FAIL: expected $expected, got $actual for: $*" >&2
+        exit 1
+    fi
+    echo "ok   $expected $*"
+}
+
+expect 401 "$base/api/auth/me"
+expect 401 -X POST -H 'Content-Type: application/json' -d '{"username":"smoke","password":"wrong"}' "$base/api/auth/login"
+expect 200 -c "$jar" -X POST -H 'Content-Type: application/json' \
+    -d "{\"username\":\"$username\",\"password\":\"$password\"}" "$base/api/auth/login"
+expect 200 -b "$jar" "$base/api/auth/me"
+expect 400 -b "$jar" "$base/api/movies/search?q=a"
+
+if grep -qE '^TMDB_API_KEY=$' .env; then
+    expect 503 -b "$jar" "$base/api/movies"
+else
+    expect 200 -b "$jar" "$base/api/movies"
+fi
+
+expect 204 -b "$jar" -c "$jar" -X POST "$base/api/auth/logout"
+expect 401 -b "$jar" "$base/api/auth/me"
+echo "Smoke test passed against $base"

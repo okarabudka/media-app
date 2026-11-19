@@ -1,0 +1,10 @@
+.git
+.github
+.env
+.env.local
+.env.*.local
+var
+vendor
+node_modules
+public/build
+config/jwt/*.pem

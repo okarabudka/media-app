@@ -1,22 +1,50 @@
+x-project: &project .:/var/www
+
 services:
   app:
-    build: .
-    restart: unless-stopped
-    working_dir: /var/www
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
     init: true
     volumes:
-      - .:/var/www
-    environment:
-      APP_ENV: dev
+      - *project
+    depends_on:
+      - redis
+    restart: unless-stopped
 
   web:
-    image: nginx:alpine
-    restart: unless-stopped
+    image: nginx:1.27-alpine
     init: true
     ports:
-      - "${APP_PORT:-8080}:80"
+      - ${APP_PORT:-8080}:80
     volumes:
-      - .:/var/www
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - .:/var/www:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  # Vite dev server with hot reload. `make up` starts it once package-lock.json exists.
+  node:
+    image: node:22-alpine
+    profiles: [frontend]
+    init: true
+    user: ${UID:-1000}:${GID:-1000}
+    working_dir: /var/www
+    environment:
+      HOME: /tmp
+      VITE_PORT: ${VITE_PORT:-5173}
+    volumes:
+      - *project
+    ports:
+      - ${VITE_PORT:-5173}:5173
+    command: sh -c "npm ci --ignore-scripts && npm run dev"
+    restart: unless-stopped
