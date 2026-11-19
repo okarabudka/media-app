@@ -1,0 +1,15 @@
+{
+  "adult": false,
+  "backdrop_path": "/icmmSD4vTTDKOq2vvdulafOGw93.jpg",
+  "genres": [{"id": 28, "name": "Action"}, {"id": 878, "name": "Science Fiction"}],
+  "id": 603,
+  "original_language": "en",
+  "original_title": "The Matrix",
+  "overview": "Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.",
+  "poster_path": "/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
+  "release_date": "1999-03-31",
+  "runtime": 136,
+  "title": "The Matrix",
+  "vote_average": 8.2,
+  "vote_count": 26420
+}

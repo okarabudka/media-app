@@ -1,15 +1,21 @@
 # see https://symfony.com/doc/current/reference/configuration/framework.html
 framework:
     secret: '%env(APP_SECRET)%'
+    # The API is stateless (JWT in a cookie); no PHP session is ever started.
+    session: false
 
-    # Note that the session will be started ONLY if you read or write from it.
-    session: true
-
-    #esi: true
-    #fragments: true
+    http_client:
+        scoped_clients:
+            tmdb.client:
+                base_uri: 'https://api.themoviedb.org/3/'
+                headers:
+                    Accept: 'application/json'
+                timeout: 5
+                max_duration: 10
 
 when@test:
     framework:
         test: true
-        session:
-            storage_factory_id: session.storage.factory.mock_file
+        # No test ever reaches the real TMDB.
+        http_client:
+            mock_response_factory: App\Tests\Support\TmdbMock

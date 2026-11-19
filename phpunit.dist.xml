@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- https://phpunit.readthedocs.io/en/latest/configuration.html -->
+<!-- https://docs.phpunit.de/en/13.0/configuration.html -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          colors="true"
          failOnDeprecation="true"
          failOnNotice="true"
          failOnWarning="true"
+         failOnRisky="true"
+         beStrictAboutOutputDuringTests="true"
          bootstrap="tests/bootstrap.php"
          cacheDirectory=".phpunit.cache"
 >
@@ -18,8 +20,11 @@
     </php>
 
     <testsuites>
-        <testsuite name="Project Test Suite">
-            <directory>tests</directory>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Functional">
+            <directory>tests/Functional</directory>
         </testsuite>
     </testsuites>
 
@@ -33,12 +38,7 @@
         </include>
 
         <deprecationTrigger>
-            <method>Doctrine\Deprecations\Deprecation::trigger</method>
-            <method>Doctrine\Deprecations\Deprecation::delegateTriggerToBackend</method>
             <function>trigger_deprecation</function>
         </deprecationTrigger>
     </source>
-
-    <extensions>
-    </extensions>
 </phpunit>
