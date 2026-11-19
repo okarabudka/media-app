@@ -1,0 +1,14 @@
+framework:
+    rate_limiter:
+        # Brute force against one account: 5 attempts per minute for each client IP and username.
+        login:
+            policy: sliding_window
+            limit: 5
+            interval: '1 minute'
+            cache_pool: cache.rate_limiter
+        # Username rotation from one client: 20 attempts per minute for each client IP.
+        login_ip:
+            policy: sliding_window
+            limit: 20
+            interval: '1 minute'
+            cache_pool: cache.rate_limiter

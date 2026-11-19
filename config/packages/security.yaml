@@ -1,0 +1,18 @@
+security:
+    providers:
+        app_users:
+            id: App\Auth\UserProvider
+
+    firewalls:
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_users
+            jwt: ~
+        main:
+            security: false
+
+    # Only the first matching rule is applied.
+    access_control:
+        - { path: ^/api/auth/(login|logout)$, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
