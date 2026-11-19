@@ -1,0 +1,12 @@
+# The SPA is served from the same origin as the API; CORS only matters for a separately hosted frontend,
+# e.g. the Vite dev server opened directly. Credentials (the auth cookie) are allowed for listed origins only.
+nelmio_cors:
+    defaults:
+        origin_regex: true
+        allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
+        allow_credentials: true
+        allow_methods: ['GET', 'POST', 'OPTIONS']
+        allow_headers: ['Content-Type']
+        max_age: 3600
+    paths:
+        '^/api/': null
