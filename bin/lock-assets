@@ -1,0 +1,17 @@
+#!/bin/sh
+# Writes package-lock.json without installing packages or running any install scripts.
+# Only versions published at least 14 days ago are eligible, so a freshly published (possibly compromised)
+# release is never picked up. Runs inside node:22-alpine; `make lock` starts it with the right options.
+set -eu
+
+cd "$(dirname "$0")/.."
+
+if ! command -v npm >/dev/null 2>&1; then
+    echo "Run this inside the node:22-alpine container, e.g. via 'make lock'." >&2
+    exit 1
+fi
+
+before=$(date -u -d "@$(( $(date +%s) - 14 * 86400 ))" +%Y-%m-%dT%H:%M:%SZ)
+echo "Resolving dependencies published before ${before}"
+
+npm install --package-lock-only --ignore-scripts --no-audit --no-fund --before="${before}"

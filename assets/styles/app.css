@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+    --color-tmdb-navy: #0d253f;
+    --color-tmdb-blue: #01b4e4;
+    --color-tmdb-green: #90cea1;
+}
+
+@layer base {
+    body {
+        @apply min-h-screen bg-slate-950 text-slate-100 antialiased;
+    }
+}
