@@ -1,0 +1,19 @@
+#!/bin/sh
+# Creates .env from .env.example on the first run and fills in freshly generated APP_SECRET and JWT_PASSPHRASE.
+# An existing .env is never touched.
+set -eu
+
+cd "$(dirname "$0")/.."
+
+if [ -f .env ]; then
+    exit 0
+fi
+
+app_secret=$(openssl rand -hex 16)
+jwt_passphrase=$(openssl rand -hex 32)
+
+sed -e "s/^APP_SECRET=\$/APP_SECRET=${app_secret}/" \
+    -e "s/^JWT_PASSPHRASE=\$/JWT_PASSPHRASE=${jwt_passphrase}/" \
+    .env.example > .env
+
+echo "Created .env with generated secrets. Set TMDB_API_KEY, AUTH_USERNAME and AUTH_PASSWORD in it."

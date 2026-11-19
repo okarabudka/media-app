@@ -1,4 +1,4 @@
-
+/.env
 ###> symfony/framework-bundle ###
 /.idea
 /.env.local
@@ -14,3 +14,18 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###
+
+###> frontend ###
+/node_modules/
+/public/build/
+/coverage/
+###< frontend ###
