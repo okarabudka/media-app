@@ -13,12 +13,15 @@ trap 'rm -f "$jar"' EXIT
 
 expect() {
     expected=$1; shift
+    # Only method and URL are printed: the arguments can contain the demo password.
+    method=GET
+    for arg; do [ "$arg" = POST ] && method=POST; url=$arg; done
     actual=$(curl -s -o /dev/null -w '%{http_code}' "$@")
     if [ "$actual" != "$expected" ]; then
-        echo "FAIL: expected $expected, got $actual for: $*" >&2
+        echo "FAIL: expected $expected, got $actual for $method $url" >&2
         exit 1
     fi
-    echo "ok   $expected $*"
+    echo "ok   $expected $method $url"
 }
 
 page=$(curl -fsS "$base/login")
