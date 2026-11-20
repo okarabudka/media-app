@@ -6,6 +6,11 @@ Movie search on top of [The Movie Database (TMDB)](https://www.themoviedb.org/).
 caches TMDB and handles login; a Vue 3 single-page app shows popular movies, searches as you type and pages through
 the results. The TMDB token stays on the server, and the session token never becomes readable by JavaScript.
 
+![Movie list rendered with sample data](docs/screenshot-movies.webp)
+
+<sub>Screenshot with **sample data** from a local stand-in for TMDB (`TMDB_BASE_URI`), not live TMDB results. Posters
+are loaded from TMDB's public image CDN.</sub>
+
 ## Why it exists
 
 It started as a take-home style task: a login-protected app for browsing and searching movies. The goal here is to
@@ -99,7 +104,34 @@ AUTH_PASSWORD=change-me-locally
 ```
 
 Open http://localhost:8080 and log in. If port 8080 is taken, set `APP_PORT` in `.env` and run `make up` again.
-Without `TMDB_API_KEY` login still works and the movie endpoints answer 503 with an explanation.
+`make up` also starts the Vite dev server (port `VITE_PORT`, default 5173) with hot reload; Symfony includes its
+scripts automatically.
+
+<img src="docs/screenshot-login.webp" alt="Login page" width="420">
+
+### Without a TMDB token
+
+Everything except the movie data works without `TMDB_API_KEY`: login, session, logout, validation and all tests.
+The movie endpoints answer `503` with "The movie database is not configured: set TMDB_API_KEY on the server.", which
+the page shows instead of the list. The test suites never need a token: PHPUnit uses a mock HTTP client with JSON
+fixtures and Vitest mocks axios.
+
+To click through the UI with data but no token, point `TMDB_BASE_URI` at any server that answers the TMDB paths
+`movie/popular`, `search/movie` and `movie/{id}` with JSON shaped like `tests/Fixtures/tmdb/`, and set
+`TMDB_API_KEY` to any non-empty value. That is how the screenshot above was made.
+
+### Production-like stack
+
+```bash
+make prod-up    # http://localhost:8081 (PROD_PORT)
+make prod-down
+```
+
+`compose.prod.yaml` builds the `app` and `web` targets of `docker/php/Dockerfile`: Composer without dev packages and
+an authoritative class map, OPcache without timestamp checks, assets compiled by Vite in a Node stage (`npm ci
+--ignore-scripts` from the lock file) and served by Nginx with immutable cache headers. No code is mounted and no dev
+server runs. It reuses `.env` and the JWT keys from `make up`; the keys are mounted read-only and handed to the
+PHP-FPM workers on start.
 
 ### Day-to-day work
 
@@ -107,23 +139,37 @@ Without `TMDB_API_KEY` login still works and the movie endpoints answer 503 with
 |-------------------|-----------------------------------------------------------------------|
 | `make up`         | Create `.env` on first run, start all containers, install, JWT keys   |
 | `make down`       | Stop and remove containers                                            |
+| `make prod-up`    | Production-like stack with compiled assets on `PROD_PORT`             |
+| `make prod-down`  | Stop the production-like stack                                        |
 | `make test`       | PHPUnit (unit + functional, no network, no TMDB token)                |
 | `make lint`       | PHP CS Fixer, PHPStan, container/YAML/Twig lint, composer validate    |
-| `make check`      | `lint` and `test`, as in CI                                           |
+| `make check`      | `lint` and `test`, the backend part of CI                             |
 | `make fix`        | Fix code style                                                        |
-| `make front-lint` | ESLint                                                                |
-| `make front-test` | Vitest                                                                |
+| `make front-lint` | ESLint (installs `node_modules` from the lock file first if needed)   |
+| `make front-test` | Vitest (jsdom, axios mocked)                                          |
 | `make build`      | Production build of the frontend into `public/build`                  |
 | `make lock`       | Regenerate `package-lock.json` (see below)                            |
 | `make help`       | List all targets                                                      |
 
-`bin/smoke-test` checks a running stack end to end (login, session, validation, logout).
+`bin/smoke-test [base-url]` checks a running stack end to end: the SPA shell and its script, login, session,
+validation, the TMDB-not-configured answer and logout. CI runs it against both stacks.
+
+### CI
+
+| Job        | What it checks                                                                              |
+|------------|---------------------------------------------------------------------------------------------|
+| `backend`  | composer validate, container/YAML/Twig lint, PHP CS Fixer, PHPStan (max), PHPUnit            |
+| `frontend` | `npm ci --ignore-scripts`, ESLint, Vitest, production build, no TMDB API host in the bundle |
+| `docker`   | `make up` with the Vite dev server and `make prod-up`, each followed by `bin/smoke-test`     |
+| `secrets`  | gitleaks over the full history                                                              |
 
 ### Frontend dependencies
 
-`package.json` pins exact versions and `.npmrc` disables install scripts. `make lock` writes `package-lock.json` in a
-`node:22-alpine` container with `npm install --package-lock-only --ignore-scripts --before=<14 days ago>`, so a
-release published in the last two weeks is never picked up. Dependabot uses the same 14-day cooldown.
+`package.json` pins exact versions, `.npmrc` disables install scripts, and every install (`make`, Docker, CI) is an
+`npm ci --ignore-scripts` from the committed `package-lock.json`. To change dependencies, edit `package.json` and run
+`make lock`: it rewrites the lock file in a `node:22-alpine` container with `npm install --package-lock-only
+--ignore-scripts --before=<14 days ago>`, so a release published in the last two weeks is never picked up.
+Dependabot uses the same 14-day cooldown.
 
 ## Security notes
 
