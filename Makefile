@@ -11,7 +11,7 @@ COMPOSE := docker compose
 EXEC := $(COMPOSE) exec -T app
 NODE := $(COMPOSE) run --rm --no-deps -T node
 
-.PHONY: help env up down logs sh test stan cs fix lint check lock front-lint front-test build
+.PHONY: help env up down logs sh test stan cs fix lint check lock front-lint front-test build prod-up prod-down
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-11s\033[0m %s\n", $$1, $$2}'
@@ -58,16 +58,29 @@ lint: cs stan ## Code style, PHPStan, container/YAML/Twig lint, composer validat
 	$(EXEC) php bin/console lint:yaml config --parse-tags
 	$(EXEC) php bin/console lint:twig templates
 
-check: lint test ## Everything CI runs for the backend
+check: lint test ## Backend checks as in CI (front-lint, front-test and build cover the frontend)
 
 lock: ## Create package-lock.json in a node container (dependencies at least 14 days old)
 	docker run --rm -v "$(CURDIR)":/app -w /app -u "$(UID):$(GID)" -e HOME=/tmp -e npm_config_cache=/tmp/.npm node:22-alpine sh bin/lock-assets
 
-front-lint: ## Lint the frontend (ESLint)
+# Installed strictly from the committed lock file, without lifecycle scripts.
+node_modules: package-lock.json
+	$(NODE) npm ci --ignore-scripts
+	@touch node_modules
+
+front-lint: node_modules ## Lint the frontend (ESLint)
 	$(NODE) npm run lint
 
-front-test: ## Run the frontend tests (Vitest)
+front-test: node_modules ## Run the frontend tests (Vitest)
 	$(NODE) npm run test
 
-build: ## Production build of the frontend into public/build
+build: node_modules ## Production build of the frontend into public/build
 	$(NODE) npm run build
+
+prod-up: env ## Production-like stack (compiled assets, no dev server) on PROD_PORT
+	@test -f config/jwt/private.pem || { echo "Run 'make up' first: it generates the JWT key pair."; exit 1; }
+	$(COMPOSE) -f compose.prod.yaml up -d --build --wait
+	@echo "Production-like app: http://localhost:$$(grep -E '^PROD_PORT=' .env | cut -d= -f2)"
+
+prod-down: ## Stop the production-like stack
+	$(COMPOSE) -f compose.prod.yaml down

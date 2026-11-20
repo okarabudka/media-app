@@ -1,0 +1,35 @@
+# Production-like stack: compiled assets, no code mounts, no dev server.
+# Uses the same .env as development; APP_ENV and APP_DEBUG are overridden here.
+name: media-app-prod
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: app
+    env_file: .env
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: '0'
+    volumes:
+      - ./config/jwt:/run/jwt:ro
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: web
+    ports:
+      - ${PROD_PORT:-8081}:80
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
