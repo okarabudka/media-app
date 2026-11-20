@@ -36,6 +36,22 @@ jobs:
       - name: PHPUnit (no network, no TMDB token)
         run: vendor/bin/phpunit
 
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install from the lock file without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+      - name: The bundle never talks to the TMDB API directly
+        run: '! grep -rq "api.themoviedb.org" public/build'
+
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -44,10 +60,18 @@ jobs:
         run: |
           make env
           sed -i -e 's/^AUTH_USERNAME=$/AUTH_USERNAME=ci/' -e 's/^AUTH_PASSWORD=$/AUTH_PASSWORD=ci-only-password/' .env
-      - run: make up
+      - name: Development stack with the Vite dev server
+        run: make up
+      - name: Wait for the Vite dev server
+        run: timeout 180 sh -c 'until curl -fs http://localhost:5173/build/@vite/client > /dev/null; do sleep 2; done'
       - run: bin/smoke-test
+      - name: Production-like stack with compiled assets
+        run: make prod-up
+      - run: bin/smoke-test "http://localhost:$(grep -E '^PROD_PORT=' .env | cut -d= -f2)"
       - if: failure()
-        run: docker compose logs
+        run: |
+          docker compose --profile frontend logs
+          docker compose -f compose.prod.yaml logs
 
   secrets:
     runs-on: ubuntu-latest

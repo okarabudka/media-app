@@ -21,6 +21,14 @@ expect() {
     echo "ok   $expected $*"
 }
 
+page=$(curl -fsS "$base/login")
+echo "$page" | grep -q '<div id="app"></div>' || { echo "FAIL: /login does not serve the SPA shell" >&2; exit 1; }
+script=$(echo "$page" | grep -o 'type="module" src="[^"]*"' | head -n 1 | sed 's/.*src="//; s/"$//')
+case $script in
+    http*) expect 200 "$script" ;;
+    /*) expect 200 "$base$script" ;;
+    *) echo "FAIL: no module script in the SPA shell" >&2; exit 1 ;;
+esac
 expect 401 "$base/api/auth/me"
 expect 401 -X POST -H 'Content-Type: application/json' -d '{"username":"smoke","password":"wrong"}' "$base/api/auth/login"
 expect 200 -c "$jar" -X POST -H 'Content-Type: application/json' \
