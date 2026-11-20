@@ -8,8 +8,8 @@ the results. The TMDB token stays on the server, and the session token never bec
 
 ![Movie list rendered with sample data](docs/screenshot-movies.webp)
 
-<sub>Screenshot with **sample data** from a local stand-in for TMDB (`TMDB_BASE_URI`), not live TMDB results. Posters
-are loaded from TMDB's public image CDN.</sub>
+<sub>Screenshot with **sample data**: fictional titles from a local stand-in for TMDB (`TMDB_BASE_URI`) and generated
+placeholder posters, not live TMDB results.</sub>
 
 ## Why it exists
 
