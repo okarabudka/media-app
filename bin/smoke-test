@@ -39,7 +39,8 @@ expect 200 -c "$jar" -X POST -H 'Content-Type: application/json' \
 expect 200 -b "$jar" "$base/api/auth/me"
 expect 400 -b "$jar" "$base/api/movies/search?q=a"
 
-if grep -qE '^TMDB_API_KEY=$' .env; then
+# TMDB_DEMO=1 in the environment: the stack runs `make demo` and serves sample data without a token.
+if [ "${TMDB_DEMO:-0}" != 1 ] && grep -qE '^TMDB_API_KEY=$' .env; then
     expect 503 -b "$jar" "$base/api/movies"
 else
     expect 200 -b "$jar" "$base/api/movies"

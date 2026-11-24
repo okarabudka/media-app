@@ -17,7 +17,7 @@ COMPOSE := docker compose
 EXEC := $(COMPOSE) exec -T app
 NODE := $(COMPOSE) run --rm --no-deps -T node
 
-.PHONY: help env up down logs sh test stan cs fix lint check lock front-lint front-test build prod-up prod-down
+.PHONY: help env up demo down logs sh test stan cs fix lint check lock front-lint front-test build prod-up prod-down
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-11s\033[0m %s\n", $$1, $$2}'
@@ -35,6 +35,11 @@ up: env ## Build and start everything, install dependencies, generate JWT keys o
 	$(EXEC) composer install --no-interaction
 	$(EXEC) php bin/console lexik:jwt:generate-keypair --skip-if-exists
 	@echo "App: http://localhost:$(APP_PORT)"
+
+demo: env ## Like up, but with fictional sample data instead of TMDB (no token needed)
+	@sh bin/init-demo-account
+	@$(MAKE) --no-print-directory up TMDB_DEMO=1
+	@echo "Demo mode: log in as '$$(grep -E '^AUTH_USERNAME=' .env | cut -d= -f2-)' with AUTH_PASSWORD from .env. 'make up' switches back to TMDB."
 
 down: ## Stop and remove containers
 	$(COMPOSE) --profile frontend down

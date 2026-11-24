@@ -2,6 +2,8 @@
 
 parameters:
     app.auth_cookie_name: auth_token
+    # Older .env files predate demo mode; without the variable it stays off.
+    env(TMDB_DEMO): '0'
 
 services:
     _defaults:

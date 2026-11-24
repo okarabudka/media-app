@@ -1,0 +1,19 @@
+#!/bin/sh
+# For `make demo`: fills in a local account in .env while AUTH_USERNAME or AUTH_PASSWORD is empty.
+# Values that are already set are never touched.
+set -eu
+
+cd "$(dirname "$0")/.."
+
+username=$(grep -E '^AUTH_USERNAME=' .env | cut -d= -f2-)
+password=$(grep -E '^AUTH_PASSWORD=' .env | cut -d= -f2-)
+if [ -n "$username" ] && [ -n "$password" ]; then
+    exit 0
+fi
+
+sed -e "s/^AUTH_USERNAME=\$/AUTH_USERNAME=demo/" \
+    -e "s/^AUTH_PASSWORD=\$/AUTH_PASSWORD=$(openssl rand -hex 8)/" \
+    .env > .env.demo-tmp
+mv .env.demo-tmp .env
+
+echo "Set a local demo account in .env: AUTH_USERNAME / AUTH_PASSWORD."
