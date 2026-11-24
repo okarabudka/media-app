@@ -29,7 +29,7 @@ HTTP errors. Search input is validated before it reaches TMDB.
 A database or OAuth provider replaces it without touching controllers or security config.
 
 **A session that scripts cannot steal.** After login the API sets a JWT (LexikJWTAuthenticationBundle) in an
-`httpOnly`, `SameSite=Strict` cookie. Login is rate limited per client and per account.
+`httpOnly`, `SameSite=Strict` cookie. Login is rate limited per client IP and per username from that IP.
 
 **A small, tested SPA.** Vue 3 with Pinia, vue-router, axios and Tailwind CSS, built by Vite and served through
 Symfony. Search waits for a 400 ms pause and at least two characters; late answers of older searches are dropped.
@@ -79,7 +79,7 @@ flowchart LR
 | Wrong credentials, missing or expired session | 401  |
 | Unknown movie                               | 404    |
 | Login body that is not JSON                 | 415    |
-| More than 5 login attempts per minute       | 429 (with `Retry-After`) |
+| Login attempts from one client IP above 5 per minute for one username or 20 in total | 429 (with `Retry-After`) |
 | TMDB rejects the token, fails or is unreachable | 502 |
 | TMDB rate limit, or `TMDB_API_KEY` not set  | 503    |
 
@@ -183,7 +183,9 @@ Dependabot uses the same 14-day cooldown.
   `CORS_ALLOW_ORIGIN`. The API changes no data besides the session itself; if it ever does, add a CSRF token.
 - **Logout.** Clears the cookie. A stateless JWT cannot be revoked before it expires (1 hour); a stolen token would
   stay valid until then. Short TTLs or a deny list are the next step if that matters.
-- **Brute force.** 5 attempts per minute per client IP and username, 20 per minute per IP, stored in Redis.
+- **Brute force.** 5 attempts per minute per client IP and username, 20 per minute per IP, stored in Redis. A
+  successful login resets the per-username counter. There is no limit per account across all IPs, so an attack
+  spread over many addresses is only slowed per address.
 - **Fail closed.** No configured account means no login; no TMDB token means a 503, never a stack trace.
 
 ## Status
