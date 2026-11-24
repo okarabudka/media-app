@@ -87,6 +87,13 @@ flowchart LR
 
 Requirements: Docker with Docker Compose, make and openssl.
 
+Quickest way to try it, without a TMDB token and without network access to TMDB: run `make demo` instead of
+`make up` below. The movie endpoints then serve fictional sample data from `fixtures/demo/movies.json` (26 titles;
+search and details work, no posters). If `AUTH_USERNAME` or `AUTH_PASSWORD` in `.env` is empty, it fills in the user
+`demo` with a random password and tells you where to find it. `make up` switches back to TMDB.
+
+With a TMDB token:
+
 ```bash
 git clone https://github.com/okarabudka/media-app.git && cd media-app
 make up
@@ -117,7 +124,7 @@ The movie endpoints answer `503` with "The movie database is not configured: set
 the page shows instead of the list. The test suites never need a token: PHPUnit uses a mock HTTP client with JSON
 fixtures and Vitest mocks axios.
 
-To click through the UI with data but no token, point `TMDB_BASE_URI` at any server that answers the TMDB paths
+To click through the UI with data but no token, use `make demo` (see above). Alternatively, point `TMDB_BASE_URI` at any server that answers the TMDB paths
 `movie/popular`, `search/movie` and `movie/{id}` with JSON shaped like `tests/Fixtures/tmdb/`, and set
 `TMDB_API_KEY` to any non-empty value. That is how the screenshot above was made.
 
@@ -187,6 +194,9 @@ Dependabot uses the same 14-day cooldown.
 - **Brute force.** 5 attempts per minute per client IP and username, 20 per minute per IP, stored in Redis. A
   successful login resets the per-username counter. There is no limit per account across all IPs, so an attack
   spread over many addresses is only slowed per address.
+- **Content-Security-Policy.** nginx allows scripts, styles, fonts and requests only from the app's own origin,
+  images additionally from `image.tmdb.org` (`docker/nginx/csp.conf`). The development stack uses a looser policy
+  for the Vite dev server and Symfony's error pages (`docker/nginx/csp.dev.conf`).
 - **Fail closed.** No configured account means no login; no TMDB token means a 503, never a stack trace.
 
 ## Status
