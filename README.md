@@ -16,7 +16,7 @@ placeholder posters, not live TMDB results.</sub>
 It started as a take-home style task: a login-protected app for browsing and searching movies. The goal here is to
 solve it the way a production feature would be solved, not just make it work: a clear API contract, security
 decisions that are written down, a third-party API that is cached and isolated behind an interface, and tests that
-run without network or credentials. The design came first and is kept in [`plan/`](plan/).
+run without network or credentials.
 
 ## What you get
 
@@ -188,9 +188,7 @@ Dependabot uses the same 14-day cooldown.
 
 ## Status
 
-Maintained. Built in November 2026 from the plan in [`plan/PLAN.md`](plan/PLAN.md) and
-[`plan/STEPS.md`](plan/STEPS.md); deviations from the plan (cookie instead of `localStorage`, Symfony 8.1 instead of
-7.x, no Doctrine) are owner decisions taken before implementation.
+Maintained. Built in November 2026.
 
 ## License
 
