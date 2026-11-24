@@ -60,6 +60,7 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD pgrep -f "php-fpm: maste
 FROM nginx:1.27-alpine AS web
 
 COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx/csp.conf /etc/nginx/snippets/csp.conf
 COPY --from=app /var/www/public /var/www/public
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=5 CMD wget -qO /dev/null http://127.0.0.1/ || exit 1

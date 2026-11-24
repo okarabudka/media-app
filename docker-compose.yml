@@ -27,6 +27,7 @@ services:
     depends_on:
       - app
     restart: unless-stopped
+      - ./docker/nginx/csp.dev.conf:/etc/nginx/snippets/csp.conf:ro
 
   redis:
     image: redis:7-alpine
