@@ -5,7 +5,7 @@ set -eu
 
 cd "$(dirname "$0")/.."
 
-base=${1:-http://localhost:$(grep -E '^APP_PORT=' .env | cut -d= -f2)}
+base=${1:-http://localhost:${APP_PORT:-$(grep -E '^APP_PORT=' .env | cut -d= -f2)}}
 username=$(grep -E '^AUTH_USERNAME=' .env | cut -d= -f2-)
 password=$(grep -E '^AUTH_PASSWORD=' .env | cut -d= -f2-)
 jar=$(mktemp)

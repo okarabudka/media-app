@@ -6,6 +6,12 @@ SHELL := /bin/bash
 export UID := $(shell id -u)
 export GID := $(shell id -g)
 
+# Host ports: the environment or `make up APP_PORT=9000` wins over .env, then the compose defaults apply.
+env_value = $(shell grep -E '^$(1)=' .env 2>/dev/null | cut -d= -f2)
+APP_PORT ?= $(or $(call env_value,APP_PORT),8080)
+PROD_PORT ?= $(or $(call env_value,PROD_PORT),8081)
+export APP_PORT PROD_PORT
+
 COMPOSE := docker compose
 # -T keeps exec usable without a TTY (CI, scripts).
 EXEC := $(COMPOSE) exec -T app
@@ -28,7 +34,7 @@ up: env ## Build and start everything, install dependencies, generate JWT keys o
 	fi
 	$(EXEC) composer install --no-interaction
 	$(EXEC) php bin/console lexik:jwt:generate-keypair --skip-if-exists
-	@echo "App: http://localhost:$$(grep -E '^APP_PORT=' .env | cut -d= -f2)"
+	@echo "App: http://localhost:$(APP_PORT)"
 
 down: ## Stop and remove containers
 	$(COMPOSE) --profile frontend down
@@ -80,7 +86,7 @@ build: node_modules ## Production build of the frontend into public/build
 prod-up: env ## Production-like stack (compiled assets, no dev server) on PROD_PORT
 	@test -f config/jwt/private.pem || { echo "Run 'make up' first: it generates the JWT key pair."; exit 1; }
 	$(COMPOSE) -f compose.prod.yaml up -d --build --wait
-	@echo "Production-like app: http://localhost:$$(grep -E '^PROD_PORT=' .env | cut -d= -f2)"
+	@echo "Production-like app: http://localhost:$(PROD_PORT)"
 
 prod-down: ## Stop the production-like stack
 	$(COMPOSE) -f compose.prod.yaml down

@@ -103,7 +103,8 @@ AUTH_USERNAME=demo
 AUTH_PASSWORD=change-me-locally
 ```
 
-Open http://localhost:8080 and log in. If port 8080 is taken, set `APP_PORT` in `.env` and run `make up` again.
+Open http://localhost:8080 and log in. If port 8080 is taken, set `APP_PORT` in `.env` and run `make up` again,
+or pass it for one run: `make up APP_PORT=9000`. `PROD_PORT` works the same way for `make prod-up`.
 `make up` also starts the Vite dev server (port `VITE_PORT`, default 5173) with hot reload; Symfony includes its
 scripts automatically.
 
